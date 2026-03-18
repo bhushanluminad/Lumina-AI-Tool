@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuoteFlow AI — Lumina Datamatics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --maroon:#7B1F3A;--maroon-dark:#5E1730;--maroon-light:#9B2D4E;--maroon-glow:rgba(123,31,58,.12);--maroon-ring:rgba(123,31,58,.22);
+  --gold:#C8963E;--gold-light:#E0B96A;--gold-glow:rgba(200,150,62,.12);
+  --navy:#0E1422;--navy-2:#141C2E;--navy-3:#1C2640;
+  --teal:#10b981;--amber:#f59e0b;--rose:#f43f5e;--violet:#8b5cf6;--cyan:#06b6d4;
+  --bg:#f7f6f4;--bg-2:#efeee9;--card:#ffffff;--card-border:#ddd8cf;--card-hover:#f9f8f6;
+  --text:#1a1615;--text-2:#3d3632;--text-3:#7a746d;--text-4:#a8a29e;
+  --radius:14px;--radius-sm:10px;--radius-xs:7px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.05);--shadow:0 4px 16px rgba(0,0,0,.06);--shadow-lg:0 12px 40px rgba(0,0,0,.09);
+  --font:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --sidebar-w:268px;--header-h:64px;
+}
+[data-theme="dark"]{
+  --bg:#0c0a0e;--bg-2:#151218;--card:#1a1620;--card-border:#2a2430;--card-hover:#1f1a26;
+  --text:#f0ece8;--text-2:#c8c0b8;--text-3:#8a8078;--text-4:#5a524a;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.25);--shadow:0 4px 16px rgba(0,0,0,.3);--shadow-lg:0 12px 40px rgba(0,0,0,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased;}
+::selection{background:var(--maroon-ring);color:#fff;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--text-4);border-radius:10px;}
+
+.sidebar{width:var(--sidebar-w);background:var(--navy);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+.sidebar-brand{padding:20px;border-bottom:1px solid rgba(255,255,255,.06);}
+.brand-row{display:flex;align-items:center;gap:14px;}
+.brand-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--maroon),var(--maroon-light));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(123,31,58,.4);flex-shrink:0;}
+.brand-icon svg{width:26px;height:26px;color:#fff;}
+.brand-text .company{font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);line-height:1;}
+.brand-text .app-name{font-size:20px;font-weight:800;letter-spacing:-.3px;line-height:1.25;margin-top:3px;color:#fff;}
+.brand-text .app-name em{font-style:normal;color:var(--gold-light);}
+.brand-text .tagline{font-size:9px;color:rgba(255,255,255,.35);margin-top:1px;}
+.sidebar-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;position:relative;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);}
+.nav-item.active{background:var(--maroon);color:#fff;font-weight:600;box-shadow:0 4px 16px rgba(123,31,58,.35);}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;opacity:.7;}.nav-item.active svg{opacity:1;}
+.nav-divider{height:1px;background:rgba(255,255,255,.06);margin:6px 14px;}
+.nav-section{padding:6px 14px 4px;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.25);}
+.sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.06);}
+.sidebar-footer .f-brand{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--gold);text-transform:uppercase;}
+.sidebar-footer .f-copy{font-size:9.5px;color:rgba(255,255,255,.2);margin-top:2px;}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{height:var(--header-h);background:var(--card);border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(255,255,255,.88);}
+[data-theme="dark"] .topbar{background:rgba(26,22,32,.88);}
+.topbar h2{font-size:16px;font-weight:700;}
+.topbar-actions{display:flex;align-items:center;gap:8px;}
+.content{flex:1;padding:24px 28px 40px;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius-xs);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;white-space:nowrap;}
+.btn-primary{background:var(--maroon);color:#fff;box-shadow:0 2px 8px rgba(123,31,58,.25);}.btn-primary:hover{background:var(--maroon-dark);transform:translateY(-1px);box-shadow:0 4px 16px rgba(123,31,58,.35);}
+.btn-secondary{background:var(--card);color:var(--text-2);border:1.5px solid var(--card-border);box-shadow:var(--shadow-sm);}.btn-secondary:hover{border-color:var(--maroon);color:var(--maroon);}
+.btn-ai{background:linear-gradient(135deg,#7B1F3A,#C8963E);color:#fff;box-shadow:0 2px 10px rgba(123,31,58,.3);}.btn-ai:hover{box-shadow:0 4px 20px rgba(123,31,58,.45);transform:translateY(-1px);}
+.btn-danger{background:var(--rose);color:#fff;}.btn-ghost{background:transparent;color:var(--text-3);padding:8px 12px;}.btn-ghost:hover{color:var(--maroon);background:var(--maroon-glow);}
+.btn-sm{padding:6px 13px;font-size:12px;}.btn-xs{padding:4px 10px;font-size:11px;}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;}
+.btn-reset{background:var(--bg-2);color:var(--text-3);border:1.5px dashed var(--card-border);}.btn-reset:hover{border-color:var(--amber);color:var(--amber);}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);transition:all .3s;}
+.card+.card{margin-top:18px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.card-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}.card-title svg{color:var(--maroon);flex-shrink:0;}
+.form-group{margin-bottom:16px;}
+.form-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:5px;}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 13px;border:1.5px solid var(--card-border);border-radius:var(--radius-xs);font-family:var(--font);font-size:13px;color:var(--text);background:var(--card);transition:all .2s;appearance:none;-webkit-appearance:none;}
+.form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:34px;cursor:pointer;}
+.form-select option{background:var(--card);color:var(--text);}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--maroon);box-shadow:0 0 0 3px var(--maroon-ring);}
+.form-textarea{resize:vertical;min-height:68px;}
+.form-input.error{border-color:var(--rose);}
+.form-hint{font-size:10px;color:var(--text-4);margin-top:3px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.form-input[readonly]{background:var(--bg-2);color:var(--text-3);cursor:not-allowed;}
+.field-flag{display:inline-flex;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+.flag-static{background:rgba(123,31,58,.08);color:var(--maroon);border:1px solid rgba(123,31,58,.15);}
+.flag-derived{background:rgba(200,150,62,.1);color:var(--gold);border:1px solid rgba(200,150,62,.2);}
+.flag-input{background:rgba(16,185,129,.08);color:#059669;border:1px solid rgba(16,185,129,.2);}
+.stepper{display:flex;align-items:center;margin-bottom:22px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 24px;box-shadow:var(--shadow);}
+.step{display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;}
+.step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--bg-2);color:var(--text-4);border:2px solid var(--card-border);transition:all .3s;flex-shrink:0;}
+.step.active .step-num{background:var(--maroon);color:#fff;border-color:var(--maroon);box-shadow:0 0 0 4px var(--maroon-ring);}
+.step.done .step-num{background:var(--maroon);color:#fff;border-color:var(--maroon);}
+.step-label{font-size:12.5px;font-weight:600;color:var(--text-4);}.step.active .step-label,.step.done .step-label{color:var(--text);}
+.step-sub{font-size:9.5px;color:var(--text-4);margin-top:1px;}
+.step-line{flex:0 0 28px;height:2px;background:var(--card-border);margin:0 4px;border-radius:2px;}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+.tbl th{text-align:left;padding:10px 14px;font-weight:600;color:var(--text-3);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--card-border);background:var(--bg-2);}
+.tbl th:first-child{border-radius:var(--radius-xs) 0 0 0;}.tbl th:last-child{border-radius:0 var(--radius-xs) 0 0;}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--card-border);}
+.tbl tbody tr:hover td{background:var(--maroon-glow);}
+.tbl .num{text-align:right;font-family:var(--mono);font-size:12px;font-weight:500;}
+.tbl .total-row td{font-weight:700;border-top:2px solid var(--navy);background:rgba(123,31,58,.03);}
+.tbl .grand-total td{font-size:15px;font-weight:800;color:var(--maroon);border-top:3px double var(--maroon);background:rgba(123,31,58,.05);}
+.tbl .excluded td{opacity:.3;text-decoration:line-through;}
+.toggle{position:relative;width:38px;height:21px;display:inline-flex;vertical-align:middle;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle .slider{position:absolute;inset:0;background:var(--card-border);border-radius:11px;cursor:pointer;transition:.25s;}
+.toggle .slider:before{content:'';position:absolute;width:15px;height:15px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.toggle input:checked+.slider{background:var(--maroon);}
+.toggle input:checked+.slider:before{transform:translateX(17px);}
+.badge{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;}
+.badge-maroon{background:var(--maroon-glow);color:var(--maroon);}
+.badge-gold{background:var(--gold-glow);color:var(--gold);}
+.badge-gray{background:var(--bg-2);color:var(--text-4);}
+.section-hdr{display:flex;align-items:center;gap:10px;margin:24px 0 14px;padding-bottom:10px;border-bottom:1.5px solid var(--card-border);}
+.section-hdr h3{font-size:14px;font-weight:700;}
+.section-hdr .s-icon{width:28px;height:28px;border-radius:var(--radius-xs);background:var(--maroon-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.section-hdr .s-icon svg{width:14px;height:14px;color:var(--maroon);}
+.converter-panel{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border-radius:var(--radius);padding:26px;margin-top:22px;border:1px solid rgba(255,255,255,.06);}
+.converter-panel h4{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.converter-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+.converter-row .form-group{margin-bottom:0;}
+.converter-row .form-group label{font-size:10px;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:5px;display:block;}
+.converter-row .form-input,.converter-row .form-select{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);color:#fff;width:auto;min-width:150px;padding:9px 13px;font-family:var(--font);font-size:13px;border-radius:var(--radius-xs);}
+.converter-row .form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:34px;appearance:none;-webkit-appearance:none;}
+.converter-row .form-select option{background:#141C2E;color:#fff;}
+.converter-row .form-input::placeholder{color:rgba(255,255,255,.3);}
+.converter-row .form-input:focus,.converter-row .form-select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,150,62,.3);outline:none;}
+.conv-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid rgba(255,255,255,.08);}
+.conv-table th{padding:11px 16px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.55);border-bottom:1px solid rgba(255,255,255,.08);text-align:left;}
+.conv-table th.num{text-align:right;}.conv-table td{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.8);}
+.conv-table td.num{text-align:right;font-family:var(--mono);font-weight:500;}
+.conv-table .conv-total td{font-weight:700;border-top:2px solid rgba(123,31,58,.4);background:rgba(123,31,58,.08);color:#fff;}
+.quote-header{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border-radius:var(--radius);padding:30px;margin-bottom:22px;position:relative;overflow:hidden;}
+.quote-header::before{content:'';position:absolute;top:-50%;right:-8%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(123,31,58,.2),transparent 70%);}
+.quote-header .ld-brand{font-size:11px;font-weight:800;letter-spacing:3px;color:var(--gold);text-transform:uppercase;position:relative;z-index:1;}
+.quote-header h2{font-size:24px;font-weight:800;margin:6px 0 18px;position:relative;z-index:1;}
+.quote-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;position:relative;z-index:1;}
+.quote-meta-item{background:rgba(255,255,255,.04);border-radius:var(--radius-xs);padding:9px 12px;border:1px solid rgba(255,255,255,.06);}
+.quote-meta-item .label{font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.7px;font-weight:600;}
+.quote-meta-item .value{font-size:13px;font-weight:600;margin-top:2px;}
+.quote-totals{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;}
+.total-card{background:var(--card);border:1.5px solid var(--card-border);border-radius:var(--radius);padding:22px;text-align:center;transition:all .2s;}
+.total-card:hover{border-color:var(--maroon);box-shadow:0 4px 20px var(--maroon-glow);}
+.total-card .tc-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+.total-card .tc-value{font-size:26px;font-weight:800;color:var(--maroon);margin-top:6px;font-family:var(--mono);letter-spacing:-1px;}
+.total-card .tc-sub{font-size:10px;color:var(--text-4);margin-top:3px;}
+.search-box{position:relative;}.search-box input{padding-left:36px;}.search-box svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-4);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:999;display:none;align-items:center;justify-content:center;}.modal-overlay.show{display:flex;}
+.modal{background:var(--card);border-radius:var(--radius);padding:30px;max-width:520px;width:92%;box-shadow:var(--shadow-lg);border:1px solid var(--card-border);}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:10px;}.modal p{font-size:13.5px;color:var(--text-2);line-height:1.6;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.empty-state{text-align:center;padding:50px 20px;}.empty-state svg{width:52px;height:52px;margin-bottom:14px;color:var(--text-4);opacity:.35;}
+.empty-state h3{font-size:16px;font-weight:600;color:var(--text-3);margin-bottom:5px;}.empty-state p{font-size:13px;color:var(--text-4);max-width:320px;margin:0 auto;}
+.screen{display:none;}.screen.active{display:block;}
+.poc-section{max-height:0;overflow:hidden;transition:max-height .4s;}.poc-section.open{max-height:900px;}
+.poc-arrow{transition:transform .3s;}.poc-arrow.rotated{transform:rotate(180deg);}
+.divider{height:1px;background:var(--card-border);margin:18px 0;}
+
+/* AI PANEL */
+.ai-panel{background:linear-gradient(135deg,rgba(123,31,58,.04),rgba(200,150,62,.04));border:1.5px solid rgba(123,31,58,.15);border-radius:var(--radius);padding:22px;margin-top:18px;position:relative;}
+.ai-panel::before{content:'AI';position:absolute;top:-8px;left:16px;background:linear-gradient(135deg,var(--maroon),var(--gold));color:#fff;font-size:9px;font-weight:800;letter-spacing:1px;padding:2px 10px;border-radius:10px;}
+.ai-panel h4{font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.ai-panel p{font-size:11.5px;color:var(--text-3);margin-bottom:12px;line-height:1.5;}
+.ai-panel textarea{width:100%;padding:10px;border:1.5px solid var(--card-border);border-radius:var(--radius-xs);font-family:var(--font);font-size:12.5px;min-height:80px;resize:vertical;background:var(--card);color:var(--text);}
+.ai-panel textarea:focus{outline:none;border-color:var(--maroon);box-shadow:0 0 0 3px var(--maroon-ring);}
+.ai-result{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-xs);padding:14px;margin-top:12px;font-size:12.5px;line-height:1.6;color:var(--text-2);white-space:pre-wrap;max-height:300px;overflow-y:auto;}
+.ai-loading{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--maroon);padding:12px 0;}
+.ai-loading .dot{width:6px;height:6px;background:var(--maroon);border-radius:50%;animation:aiPulse .8s infinite alternate;}
+.ai-loading .dot:nth-child(2){animation-delay:.2s;}.ai-loading .dot:nth-child(3){animation-delay:.4s;}
+@keyframes aiPulse{from{opacity:.3;transform:scale(.8);}to{opacity:1;transform:scale(1.1);}}
+.ai-disabled-msg{text-align:center;padding:16px;color:var(--text-4);font-size:12px;}
+
+@media print{.sidebar,.topbar,.stepper,.converter-panel,.btn,.ai-panel{display:none!important;}.main{margin-left:0!important;}.content{padding:0!important;}}
+@media(max-width:1024px){.sidebar{transform:translateX(-100%);}.main{margin-left:0;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.card,.stepper{animation:fadeUp .4s ease both;}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-row">
+      <div class="brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+      <div class="brand-text">
+        <div class="company">Lumina Datamatics</div>
+        <div class="app-name">QuoteFlow <em>AI</em></div>
+        <div class="tagline">Intelligent Quote Engine</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Workflow</div>
+    <div class="nav-item active" data-screen="newQuote" onclick="showScreen('newQuote')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>New Quote</div>
+    <div class="nav-item" data-screen="savedQuotes" onclick="showScreen('savedQuotes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>Saved Quotes</div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Configure</div>
+    <div class="nav-item" data-screen="rateCardMgmt" onclick="showScreen('rateCardMgmt')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20M9 21V9"/></svg>Rate Card</div>
+    <div class="nav-item" data-screen="aiSettings" onclick="showScreen('aiSettings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><path d="M10 18h4M11 22h2"/></svg>AI Features</div>
+    <div class="nav-item" data-screen="settings" onclick="showScreen('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>Settings</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="f-brand">Lumina Datamatics</div>
+    <div class="f-copy">QuoteFlow AI v3.0 &middot; &copy; 2026</div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <h2 id="topbarTitle">New Quote</h2>
+    <div class="topbar-actions">
+      <button class="btn btn-reset btn-sm" onclick="resetToDefaults()">&#8635; Reset</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleTheme()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
+    </div>
+  </header>
+  <div class="content">
+
+    <div class="screen active" id="screen-newQuote">
+      <div class="stepper"><div class="step active" onclick="goToStep(1)"><div class="step-num">1</div><div class="step-info"><div class="step-label">Project Details</div><div class="step-sub">Client & request</div></div></div><div class="step-line"></div><div class="step" onclick="goToStep(2)"><div class="step-num">2</div><div class="step-info"><div class="step-label">Scope Config</div><div class="step-sub">Parameters</div></div></div><div class="step-line"></div><div class="step" onclick="goToStep(3)"><div class="step-num">3</div><div class="step-info"><div class="step-label">Rate Card</div><div class="step-sub">Pricing</div></div></div><div class="step-line"></div><div class="step" onclick="goToStep(4)"><div class="step-num">4</div><div class="step-info"><div class="step-label">Quote Summary</div><div class="step-sub">Review & export</div></div></div></div>
+
+      <!-- STEP 1 -->
+      <div class="wizard-step" id="wizardStep1"><div class="card">
+        <div class="card-header"><div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Project Request Details</div><span class="badge badge-maroon">Step 1 of 4</span></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Client Name * <span class="field-flag flag-input">Input</span></label><input class="form-input" id="clientName" placeholder="e.g., eBay Inc."></div><div class="form-group"><label class="form-label">Date of Request * <span class="field-flag flag-input">Input</span></label><input type="date" class="form-input" id="requestDate"></div></div>
+        <div class="form-row-3"><div class="form-group"><label class="form-label">Locale *</label><select class="form-select" id="locale"><option value="">Select...</option><option>US</option><option>UK</option><option>AU</option><option>DE</option><option>FR</option><option>IN</option><option>CA</option><option>JP</option><option>Custom</option></select></div><div class="form-group"><label class="form-label">Target Website *</label><input class="form-input" id="targetSite" placeholder="e.g., eBay"></div><div class="form-group"><label class="form-label">Cadence *</label><select class="form-select" id="cadence"><option value="">Select...</option><option>Daily</option><option>Weekly</option><option>Bi-Weekly</option><option>Monthly</option><option>Custom</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Project Code * <span class="field-flag flag-input">Free Text</span></label><input class="form-input" id="projectCode" placeholder="Enter project code"><div class="form-hint">e.g., VT-EBAY-202603-001</div></div><div class="form-group"><label class="form-label">Prepared By *</label><input class="form-input" id="preparedBy" placeholder="Your name"></div></div>
+        <div class="form-group"><label class="form-label">Project Type * <span class="field-flag flag-static">Static</span></label><select class="form-select" id="projectType"><option value="velocity_tracking">Velocity Tracking</option></select></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Project Summary</label><textarea class="form-textarea" id="projectSummary" placeholder="Brief description..."></textarea></div><div class="form-group"><label class="form-label">Brief Scope</label><textarea class="form-textarea" id="briefScope" placeholder="High-level scope..."></textarea></div></div>
+
+        <!-- AI Feature 1: Scope Estimator -->
+        <div class="ai-panel" id="aiPanel1" style="display:none;">
+          <h4>&#9889; AI Scope Estimator</h4>
+          <p>Paste a client brief, RFP, or email below. AI will read it and auto-suggest scope parameters (categories, products, server sizing, effort estimates) to pre-fill Step 2.</p>
+          <textarea id="aiBriefInput" placeholder="Paste client brief or RFP text here..."></textarea>
+          <button class="btn btn-ai btn-sm" onclick="aiExtractScope()" style="margin-top:8px;">Extract Scope from Brief</button>
+          <div id="aiScopeResult"></div>
+        </div>
+
+        <div id="step1Errors" style="color:var(--rose);font-size:12px;margin-bottom:8px;font-weight:500;"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;"><button class="btn btn-primary" onclick="nextStep(1)">Next &rarr; Scope Configuration</button></div>
+      </div></div>
+
+      <!-- STEP 2 -->
+      <div class="wizard-step" id="wizardStep2" style="display:none;"><div class="card">
+        <div class="card-header"><div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Scope Configuration</div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span class="badge badge-maroon">Step 2 of 4</span><label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:600;color:var(--text-3);"><input type="checkbox" id="selectAllScope" checked onchange="toggleAllScope(this.checked)"> All</label></div></div>
+
+        <div class="section-hdr"><div class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg></div><h3>A. Core Scope</h3></div>
+        <div class="form-row"><div class="form-group"><label class="form-label">Site <span class="field-flag flag-static">Pre-filled</span></label><input class="form-input" id="scopeSite" readonly></div><div class="form-group"><label class="form-label">Scope ID <span class="field-flag flag-input">Input</span></label><input class="form-input" id="scopeId" value="FBM"></div></div>
+        <div class="form-row-3"><div class="form-group"><label class="form-label">Locale <span class="field-flag flag-static">Pre-filled</span></label><input class="form-input" id="scopeLocale" readonly></div><div class="form-group"><label class="form-label"># Categories</label><input type="number" min="0" class="form-input" id="numCategories" value="20"></div><div class="form-group"><label class="form-label">Total Products</label><input type="number" min="0" class="form-input" id="totalProducts" value="14000"></div></div>
+
+        <div class="section-hdr"><div class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 10h10M7 14h10"/></svg></div><h3>B. Server Config</h3></div>
+        <div class="form-row"><div class="form-group" data-key="serversInitial"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="serversInitial"><span class="slider"></span></label># Servers (Initial)</label><input type="number" min="0" class="form-input scope-field" id="serversInitial" value="6"></div><div class="form-group" data-key="daysInitial"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="daysInitial"><span class="slider"></span></label># Days (Initial)</label><input type="number" min="0" class="form-input scope-field" id="daysInitial" value="5"></div></div>
+        <div class="form-row"><div class="form-group" data-key="numReScrapes"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="numReScrapes"><span class="slider"></span></label># Re-Scrapes</label><input type="number" min="0" class="form-input scope-field" id="numReScrapes" value="26"></div><div class="form-group" data-key="serversPerReScrape"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="serversPerReScrape"><span class="slider"></span></label>Servers/Re-Scrape</label><input type="number" min="0" class="form-input scope-field" id="serversPerReScrape" value="1.5" step="0.1"></div></div>
+
+        <div class="section-hdr"><div class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><h3>C. Tech Effort</h3></div>
+        <div class="form-row-3"><div class="form-group" data-key="techHrsInitial"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="techHrsInitial"><span class="slider"></span></label>Hrs/Day (Init)</label><input type="number" min="0" class="form-input scope-field" id="techHrsInitial" value="9"></div><div class="form-group" data-key="techDaysInitial"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="techDaysInitial"><span class="slider"></span></label># Days (Init)</label><input type="number" min="0" class="form-input scope-field" id="techDaysInitial" value="5"></div><div class="form-group" data-key="techResInitial"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="techResInitial"><span class="slider"></span></label># Resources</label><input type="number" min="0" class="form-input scope-field" id="techResInitial" value="1.5" step="0.1"></div></div>
+        <div class="form-row-3"><div class="form-group" data-key="techHrsWeekday"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="techHrsWeekday"><span class="slider"></span></label>Hrs/Day (WD)</label><input type="number" min="0" class="form-input scope-field" id="techHrsWeekday" value="9"></div><div class="form-group" data-key="weekdayReDays"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="weekdayReDays"><span class="slider"></span></label># WD Days</label><input type="number" min="0" class="form-input scope-field" id="weekdayReDays" value="24"></div><div class="form-group" data-key="weekdayReRes"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="weekdayReRes"><span class="slider"></span></label># Res (WD)</label><input type="number" min="0" class="form-input scope-field" id="weekdayReRes" value="1"></div></div>
+        <div class="form-row-3"><div class="form-group" data-key="techHrsWeekend"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="techHrsWeekend"><span class="slider"></span></label>Hrs/Day (WE)</label><input type="number" min="0" class="form-input scope-field" id="techHrsWeekend" value="9"></div><div class="form-group" data-key="weekendReDays"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="weekendReDays"><span class="slider"></span></label># WE Days</label><input type="number" min="0" class="form-input scope-field" id="weekendReDays" value="2"></div><div class="form-group" data-key="weekendReRes"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="weekendReRes"><span class="slider"></span></label># Res (WE)</label><input type="number" min="0" class="form-input scope-field" id="weekendReRes" value="1"></div></div>
+
+        <div class="section-hdr"><div class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg></div><h3>D. Ops & Management</h3></div>
+        <div class="form-row-3"><div class="form-group" data-key="opsHrsDay"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="opsHrsDay"><span class="slider"></span></label>OPS Hrs/Day</label><input type="number" min="0" class="form-input scope-field" id="opsHrsDay" value="4"></div><div class="form-group" data-key="opsDays"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="opsDays"><span class="slider"></span></label># OPS Days</label><input type="number" min="0" class="form-input scope-field" id="opsDays" value="5"></div><div class="form-group" data-key="opsRes"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="opsRes"><span class="slider"></span></label># OPS Res</label><input type="number" min="0" class="form-input scope-field" id="opsRes" value="1"></div></div>
+        <div class="form-row-3"><div class="form-group" data-key="mgrHrsDay"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="mgrHrsDay"><span class="slider"></span></label>Mgr Hrs/Day</label><input type="number" min="0" class="form-input scope-field" id="mgrHrsDay" value="4"></div><div class="form-group" data-key="mgrDays"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="mgrDays"><span class="slider"></span></label># Mgr Days</label><input type="number" min="0" class="form-input scope-field" id="mgrDays" value="5"></div><div class="form-group" data-key="mgrRes"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="mgrRes"><span class="slider"></span></label># Mgr Res</label><input type="number" min="0" class="form-input scope-field" id="mgrRes" value="1"></div></div>
+        <div style="max-width:320px;"><div class="form-group" data-key="mgrOverheadHrs"><label class="form-label"><label class="toggle" style="margin-right:5px;"><input type="checkbox" checked class="scope-toggle" data-key="mgrOverheadHrs"><span class="slider"></span></label>Mgr Overhead Hrs</label><input type="number" min="0" class="form-input scope-field" id="mgrOverheadHrs" value="10"></div></div>
+
+        <div class="section-hdr"><div class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></div><h3>E. Delivery</h3></div>
+        <div class="form-row"><div class="form-group"><label class="form-label"># Instances</label><input type="number" min="0" class="form-input" id="numInstances" value="3"></div><div class="form-group"><label class="form-label">PM Overhead %</label><input type="number" min="0" class="form-input" id="pmOverhead" value="10"></div></div>
+
+        <div class="section-hdr" style="cursor:pointer;" onclick="togglePoc()"><div class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div><h3>POC Pricing (Optional)</h3><svg id="pocArrow" class="poc-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="poc-section" id="pocSection"><div style="padding:14px 0;"><label style="font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:14px;font-weight:600;"><input type="checkbox" id="includePoc"> Include POC in Total</label><div class="form-row"><div class="form-group"><label class="form-label">POC Servers</label><input type="number" min="0" class="form-input" id="pocServers" value="0"></div><div class="form-group"><label class="form-label">POC Tech Hrs</label><input type="number" min="0" class="form-input" id="pocTechHrs" value="0"></div></div><div class="form-row"><div class="form-group"><label class="form-label">POC Mgr Hrs</label><input type="number" min="0" class="form-input" id="pocMgrHrs" value="0"></div><div class="form-group"><label class="form-label">POC Scrapers</label><input type="number" min="0" class="form-input" id="pocScrapers" value="0"></div></div></div></div>
+
+        <!-- AI Feature 6: Anomaly Detector -->
+        <div class="ai-panel" id="aiPanel6" style="display:none;">
+          <h4>&#128269; AI Anomaly Detector</h4>
+          <p>Compares your current scope inputs against your saved quote history and flags any unusual values that may indicate errors or outliers.</p>
+          <button class="btn btn-ai btn-sm" onclick="aiDetectAnomalies()">Scan for Anomalies</button>
+          <div id="aiAnomalyResult"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;margin-top:18px;"><button class="btn btn-secondary" onclick="goToStep(1)">&larr; Back</button><button class="btn btn-primary" onclick="nextStep(2)">Next &rarr; Rate Card</button></div>
+      </div></div>
+
+      <!-- STEP 3 -->
+      <div class="wizard-step" id="wizardStep3" style="display:none;"><div class="card">
+        <div class="card-header"><div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>Rate Card</div><div style="display:flex;gap:8px;"><span class="badge badge-maroon">Step 3 of 4</span><button class="btn btn-sm btn-secondary" onclick="addRateComponent()">+ Add</button></div></div>
+        <div style="overflow-x:auto;"><table class="tbl"><thead><tr><th style="width:50px;">Active</th><th>Component</th><th>Type</th><th style="width:130px;">Rate</th><th>Unit</th><th style="width:50px;">Edit</th></tr></thead><tbody id="rateCardBody"></tbody></table></div>
+        <div class="section-hdr" style="margin-top:24px;"><div class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><h3>Derived Rates</h3><span class="field-flag flag-derived" style="margin-left:6px;">Auto</span></div>
+        <div style="background:var(--bg-2);border-radius:var(--radius-sm);padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:18px;border:1px solid var(--card-border);">
+          <div><div style="font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Server Price / Month</div><div id="derivedMonthly" style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--maroon);margin-top:5px;">$1,285.71</div><div style="font-size:10px;color:var(--text-4);margin-top:2px;">= Cost &divide; (1 &minus; Margin%)</div></div>
+          <div><div style="font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Server Price / Day</div><div id="derivedDaily" style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--maroon);margin-top:5px;">$42.86</div><div style="font-size:10px;color:var(--text-4);margin-top:2px;">= Monthly &divide; 30</div></div>
+        </div>
+
+        <!-- AI Feature 4: Negotiation Advisor -->
+        <div class="ai-panel" id="aiPanel4" style="display:none;">
+          <h4>&#128176; AI Negotiation Advisor</h4>
+          <p>Enter the client&#39;s budget or pushback details. AI suggests specific discount scenarios with margin impact analysis so you can negotiate confidently.</p>
+          <textarea id="aiNegInput" placeholder="e.g., Client budget is $28,000 for 3 instances. They want 15% discount..."></textarea>
+          <button class="btn btn-ai btn-sm" onclick="aiNegotiate()" style="margin-top:8px;">Get Discount Scenarios</button>
+          <div id="aiNegResult"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;margin-top:20px;"><button class="btn btn-secondary" onclick="goToStep(2)">&larr; Back</button><button class="btn btn-primary" onclick="nextStep(3)">Next &rarr; Generate Quote</button></div>
+      </div></div>
+
+      <!-- STEP 4 -->
+      <div class="wizard-step" id="wizardStep4" style="display:none;"><div id="quoteOutput"></div></div>
+    </div>
+
+    <!-- SAVED QUOTES -->
+    <div class="screen" id="screen-savedQuotes"><div class="card">
+      <div class="card-header"><div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>Saved Quotes</div><div class="search-box" style="min-width:240px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input class="form-input" placeholder="Search..." id="searchQuotes" oninput="renderSavedQuotes()"></div></div>
+
+      <!-- AI Feature 5: Quote Comparator -->
+      <div class="ai-panel" id="aiPanel5" style="display:none;">
+        <h4>&#128200; AI Quote Comparator</h4>
+        <p>Select two saved quotes to compare. AI generates a plain-English diff highlighting what changed, why the price moved, and how to explain it to the client.</p>
+        <div class="form-row"><div class="form-group"><label class="form-label">Quote A (older)</label><select class="form-select" id="aiCompareA"></select></div><div class="form-group"><label class="form-label">Quote B (newer)</label><select class="form-select" id="aiCompareB"></select></div></div>
+        <button class="btn btn-ai btn-sm" onclick="aiCompareQuotes()">Compare Versions</button>
+        <div id="aiCompareResult"></div>
+      </div>
+
+      <div id="savedQuotesList"></div>
+    </div></div>
+
+    <!-- RATE CARD MGMT -->
+    <div class="screen" id="screen-rateCardMgmt"><div class="card">
+      <div class="card-header"><div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20M9 21V9"/></svg>Master Rate Card</div><button class="btn btn-sm btn-primary" onclick="saveMasterRateCard()">Save</button></div>
+      <p style="font-size:12px;color:var(--text-3);margin-bottom:16px;">Changes only affect <strong>new quotes</strong>.</p>
+      <div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Active</th><th>Component</th><th style="width:130px;">Rate</th><th>Unit</th></tr></thead><tbody id="masterRateBody"></tbody></table></div>
+      <button class="btn btn-sm btn-secondary" style="margin-top:12px;" onclick="addMasterRateComponent()">+ Add</button>
+      <div class="section-hdr" style="margin-top:24px;"><h3>Version Log</h3></div>
+      <div id="rateVersionLog"></div>
+    </div></div>
+
+    <!-- AI SETTINGS -->
+    <div class="screen" id="screen-aiSettings"><div class="card">
+      <div class="card-header"><div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><path d="M10 18h4M11 22h2"/></svg>QuoteFlow AI Features</div><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;font-weight:600;color:var(--text-3);">Enable AI</span><label class="toggle"><input type="checkbox" id="aiMasterToggle" onchange="toggleAI(this.checked)"><span class="slider"></span></label></div></div>
+      <p style="font-size:13px;color:var(--text-3);margin-bottom:18px;line-height:1.6;">Toggle AI features on/off. When enabled, AI panels appear at relevant steps in the workflow. All AI features use the Claude API &mdash; enter your API key below to activate.</p>
+      <div class="form-group"><label class="form-label">Anthropic API Key</label><input type="password" class="form-input" id="aiApiKey" placeholder="sk-ant-..." style="font-family:var(--mono);font-size:12px;"><div class="form-hint">Your key is stored locally in your browser only. Never shared externally.</div></div>
+      <div class="divider"></div>
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:14px;">Available AI Features</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="card" style="padding:16px;border-color:rgba(123,31,58,.12);"><h5 style="font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;">1. Scope Estimator</h5><p style="font-size:11.5px;color:var(--text-3);line-height:1.5;">Paste a client brief &mdash; AI extracts scope parameters like categories, products, server sizing. Saves 15-20 min per quote.</p><div style="font-size:10px;color:var(--text-4);margin-top:6px;">&#128205; Appears in: Step 1</div></div>
+        <div class="card" style="padding:16px;border-color:rgba(123,31,58,.12);"><h5 style="font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;">2. Quote Narrator</h5><p style="font-size:11.5px;color:var(--text-3);line-height:1.5;">Auto-generates a professional executive summary and cover note for the quote. Client-ready output in one click.</p><div style="font-size:10px;color:var(--text-4);margin-top:6px;">&#128205; Appears in: Step 4</div></div>
+        <div class="card" style="padding:16px;border-color:rgba(123,31,58,.12);"><h5 style="font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;">3. Email Drafter</h5><p style="font-size:11.5px;color:var(--text-3);line-height:1.5;">Generates a ready-to-send quote submission email with key highlights, pricing summary, and next steps.</p><div style="font-size:10px;color:var(--text-4);margin-top:6px;">&#128205; Appears in: Step 4</div></div>
+        <div class="card" style="padding:16px;border-color:rgba(123,31,58,.12);"><h5 style="font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;">4. Negotiation Advisor</h5><p style="font-size:11.5px;color:var(--text-3);line-height:1.5;">Input client budget or pushback. AI suggests discount scenarios with margin impact analysis to protect your floor.</p><div style="font-size:10px;color:var(--text-4);margin-top:6px;">&#128205; Appears in: Step 3</div></div>
+        <div class="card" style="padding:16px;border-color:rgba(123,31,58,.12);"><h5 style="font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;">5. Quote Comparator</h5><p style="font-size:11.5px;color:var(--text-3);line-height:1.5;">Compare two quote versions &mdash; AI generates a plain-English diff with change narrative for client communication.</p><div style="font-size:10px;color:var(--text-4);margin-top:6px;">&#128205; Appears in: Saved Quotes</div></div>
+        <div class="card" style="padding:16px;border-color:rgba(123,31,58,.12);"><h5 style="font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;">6. Anomaly Detector</h5><p style="font-size:11.5px;color:var(--text-3);line-height:1.5;">Scans current inputs against your quote history and flags outliers that may be errors or unusual configurations.</p><div style="font-size:10px;color:var(--text-4);margin-top:6px;">&#128205; Appears in: Step 2</div></div>
+        <div class="card" style="padding:16px;border-color:rgba(123,31,58,.12);"><h5 style="font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;">7. Chat Assistant</h5><p style="font-size:11.5px;color:var(--text-3);line-height:1.5;">Ask natural language questions about the current quote: &ldquo;What if we reduce instances to 2?&rdquo; &mdash; get instant answers.</p><div style="font-size:10px;color:var(--text-4);margin-top:6px;">&#128205; Appears in: Step 4</div></div>
+        <div class="card" style="padding:16px;border-color:rgba(123,31,58,.12);"><h5 style="font-size:13px;font-weight:700;color:var(--maroon);margin-bottom:4px;">8. Scope Optimizer</h5><p style="font-size:11.5px;color:var(--text-3);line-height:1.5;">Analyzes past saved quotes for similar projects and recommends optimal scope configuration. Learns over time.</p><div style="font-size:10px;color:var(--text-4);margin-top:6px;">&#128205; Appears in: Step 2</div></div>
+      </div>
+    </div></div>
+
+    <!-- SETTINGS -->
+    <div class="screen" id="screen-settings"><div class="card">
+      <div class="card-header"><div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>Settings</div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="settCompany" value="Lumina Datamatics"></div><div class="form-group"><label class="form-label">Default Prepared By</label><input class="form-input" id="settPreparedBy"></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Default Currency</label><select class="form-select" id="settCurrency"><option>INR</option><option>EUR</option><option>GBP</option><option>AUD</option><option>CAD</option><option>JPY</option><option>SGD</option><option>AED</option><option>CHF</option></select></div><div class="form-group"><label class="form-label">Theme</label><div style="display:flex;gap:8px;margin-top:5px;"><button class="btn btn-sm btn-secondary" onclick="setTheme('light')">Light</button><button class="btn btn-sm btn-secondary" onclick="setTheme('dark')">Dark</button></div></div></div>
+      <div class="divider"></div>
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:12px;">Data Management</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-secondary btn-sm" onclick="exportAllData()">Export JSON</button><button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">Import</button><input type="file" id="importFile" accept=".json" style="display:none;" onchange="importAllData(event)"><button class="btn btn-danger btn-sm" onclick="clearAllData()">Clear All</button></div>
+    </div></div>
+
+  </div>
+</div>
+<div class="modal-overlay" id="modal"><div class="modal" id="modalContent"></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtC=(n,sym='$')=>sym+fmt(n);
+const pf=v=>parseFloat(v)||0;
+const today=()=>new Date().toISOString().split('T')[0];
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const DEFAULT_RATES=[
+  {id:'serverCostMonthly',name:'Azure Server Cost for LD (per month)',rate:450,unit:'Per Month',active:true,excludable:true,type:'static'},
+  {id:'marginPct',name:'Margin %',rate:65,unit:'%',active:true,excludable:false,type:'static'},
+  {id:'scraperDesign',name:'Scraper Design (Simple)',rate:350,unit:'One-time',active:true,excludable:true,type:'static'},
+  {id:'opsRate',name:'Ops Weekday Rate',rate:10,unit:'Per Hour',active:true,excludable:true,type:'static'},
+  {id:'techWeekdayRate',name:'Tech Weekday Rate',rate:20,unit:'Per Hour',active:true,excludable:true,type:'static'},
+  {id:'techWeekendRate',name:'Tech Weekend Rate',rate:30,unit:'Per Hour',active:true,excludable:true,type:'static'},
+  {id:'managerRate',name:'Manager Rate',rate:25,unit:'Per Hour',active:true,excludable:true,type:'static'},
+  {id:'scraperDesignCost',name:'Scraper Design Cost (Internal)',rate:200,unit:'One-time',active:true,excludable:true,type:'static'},
+];
+const DEFAULT_SCOPE={scopeId:'FBM',numCategories:20,totalProducts:14000,serversInitial:6,daysInitial:5,numReScrapes:26,serversPerReScrape:1.5,techHrsInitial:9,techDaysInitial:5,techResInitial:1.5,techHrsWeekday:9,weekdayReDays:24,weekdayReRes:1,techHrsWeekend:9,weekendReDays:2,weekendReRes:1,opsHrsDay:4,opsDays:5,opsRes:1,mgrHrsDay:4,mgrDays:5,mgrRes:1,mgrOverheadHrs:10,numInstances:3,pmOverhead:10,pocServers:0,pocTechHrs:0,pocMgrHrs:0,pocScrapers:0};
+
+let currentRates=JSON.parse(JSON.stringify(DEFAULT_RATES));
+let currentStep=1;let scopeToggles={};let aiEnabled=false;
+
+document.addEventListener('DOMContentLoaded',()=>{$('requestDate').value=today();loadSettings();renderRateCard();renderMasterRateCard();renderSavedQuotes();renderRateVersionLog();initScopeToggles();
+  const savedKey=localStorage.getItem('qf_api_key');if(savedKey&&$('aiApiKey'))$('aiApiKey').value=savedKey;
+  const savedAI=localStorage.getItem('qf_ai_enabled');if(savedAI==='true'){aiEnabled=true;$('aiMasterToggle').checked=true;showAIPanels();}
+  $('aiApiKey')?.addEventListener('change',()=>localStorage.setItem('qf_api_key',$('aiApiKey').value));
+});
+
+function initScopeToggles(){document.querySelectorAll('.scope-toggle').forEach(cb=>{scopeToggles[cb.dataset.key]=true;cb.addEventListener('change',function(){scopeToggles[this.dataset.key]=this.checked;const grp=this.closest('.form-group');if(grp){const inp=grp.querySelector('.scope-field');if(inp){inp.disabled=!this.checked;inp.style.opacity=this.checked?1:0.3;inp.style.textDecoration=this.checked?'none':'line-through';}}});});}
+function toggleAllScope(c){document.querySelectorAll('.scope-toggle').forEach(cb=>{cb.checked=c;cb.dispatchEvent(new Event('change'));});}
+function togglePoc(){$('pocSection').classList.toggle('open');$('pocArrow').classList.toggle('rotated');}
+
+function toggleAI(on){aiEnabled=on;localStorage.setItem('qf_ai_enabled',on);showAIPanels();}
+function showAIPanels(){[1,2,3,4,5,6,7,8].forEach(n=>{const p=$('aiPanel'+n);if(p)p.style.display=aiEnabled?'block':'none';});}
+
+function resetToDefaults(){if(!confirm('Reset all fields to defaults?'))return;['clientName','targetSite','projectCode','preparedBy','projectSummary','briefScope'].forEach(id=>{if($(id))$(id).value='';});$('requestDate').value=today();$('locale').value='';$('cadence').value='';Object.entries(DEFAULT_SCOPE).forEach(([k,v])=>{if($(k))$(k).value=v;});$('includePoc').checked=false;document.querySelectorAll('.scope-toggle').forEach(cb=>{cb.checked=true;cb.dispatchEvent(new Event('change'));});$('selectAllScope').checked=true;currentRates=JSON.parse(JSON.stringify(getMasterRates().length?getMasterRates():DEFAULT_RATES));renderRateCard();goToStep(1);showScreen('newQuote');}
+
+function showScreen(name){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$('screen-'+name).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.screen===name));const t={newQuote:'New Quote',savedQuotes:'Saved Quotes',rateCardMgmt:'Rate Card',aiSettings:'AI Features',settings:'Settings'};$('topbarTitle').textContent=t[name]||'QuoteFlow AI';if(name==='savedQuotes'){renderSavedQuotes();populateCompareDropdowns();}if(name==='rateCardMgmt')renderMasterRateCard();}
+function goToStep(n){currentStep=n;document.querySelectorAll('.wizard-step').forEach((s,i)=>s.style.display=(i+1===n)?'block':'none');document.querySelectorAll('.step').forEach((s,i)=>{s.classList.remove('active','done');if(i+1===n)s.classList.add('active');else if(i+1<n)s.classList.add('done');});if(n===2){$('scopeSite').value=$('targetSite').value;$('scopeLocale').value=$('locale').value;}if(n===3)renderRateCard();if(n===4)generateQuote();window.scrollTo({top:0,behavior:'smooth'});}
+function nextStep(f){if(f===1){const req=['clientName','requestDate','locale','targetSite','cadence','projectCode','preparedBy'];const miss=req.filter(id=>!$(id).value.trim());if(miss.length){$('step1Errors').textContent='Please fill all required fields *';miss.forEach(id=>$(id).classList.add('error'));return;}req.forEach(id=>$(id).classList.remove('error'));$('step1Errors').textContent='';}goToStep(f+1);}
+
+function renderRateCard(){const tb=$('rateCardBody');tb.innerHTML='';currentRates.forEach((r,i)=>{const tr=document.createElement('tr');if(!r.active)tr.classList.add('excluded');const tf=r.type==='static'?'<span class="field-flag flag-static">Static</span>':'<span class="field-flag flag-input">Custom</span>';tr.innerHTML=`<td>${r.excludable?`<label class="toggle"><input type="checkbox" ${r.active?'checked':''} onchange="toggleRate(${i},this.checked)"><span class="slider"></span></label>`:'<span style="color:var(--text-4);font-size:9px;font-weight:700;">REQ</span>'}</td><td style="font-weight:500;">${r.name}</td><td>${tf}</td><td><input type="number" min="0" class="form-input" style="width:120px;padding:6px 10px;font-size:12px;font-family:var(--mono);" value="${r.rate}" step="any" onchange="updateRate(${i},this.value)" ${!r.active?'disabled':''}></td><td><span class="badge badge-gray">${r.unit}</span></td><td><button class="btn btn-ghost btn-xs" onclick="editRateName(${i})">&#9999;</button></td>`;tb.appendChild(tr);});updateDerived();}
+function toggleRate(i,v){currentRates[i].active=v;renderRateCard();}
+function updateRate(i,v){currentRates[i].rate=pf(v);updateDerived();}
+function editRateName(i){const n=prompt('Edit name:',currentRates[i].name);if(n){currentRates[i].name=n;renderRateCard();}}
+function addRateComponent(){const name=prompt('Name:');if(!name)return;const rate=pf(prompt('Rate:','0'));const unit=prompt('Unit:','Per Hour')||'Per Hour';currentRates.push({id:'c_'+Date.now(),name,rate,unit,active:true,excludable:true,type:'custom'});renderRateCard();}
+function getRate(id){const r=currentRates.find(x=>x.id===id);return r&&r.active?r.rate:0;}
+function safeMargin(mg){const m=mg/100;return m>=1?0.99:m<0?0:m;}
+function updateDerived(){const c=getRate('serverCostMonthly'),m=safeMargin(getRate('marginPct'));const mp=c/(1-m);$('derivedMonthly').textContent=fmtC(mp);$('derivedDaily').textContent=fmtC(mp/30);}
+
+function calculate(){const v=id=>scopeToggles[id]===false?0:pf($(id).value);const cost=getRate('serverCostMonthly'),margin=safeMargin(getRate('marginPct'));const spm=cost/(1-margin),spd=spm/30;const sI=v('serversInitial')*v('daysInitial'),sR=v('numReScrapes')*v('serversPerReScrape'),tS=sI+sR,tSP=tS*spd;const tHI=v('techHrsInitial')*v('techDaysInitial')*v('techResInitial'),tHW=v('techHrsWeekday')*v('weekdayReDays')*v('weekdayReRes'),tHE=v('techHrsWeekend')*v('weekendReDays')*v('weekendReRes'),tTH=tHI+tHW+tHE;const tPI=tHI*getRate('techWeekdayRate'),tPW=tHW*getRate('techWeekdayRate'),tPE=tHE*getRate('techWeekendRate'),tTP=tPI+tPW+tPE;const oH=v('opsHrsDay')*v('opsDays')*v('opsRes'),tOP=oH*getRate('opsRate');const mH=(v('mgrHrsDay')*v('mgrDays')*v('mgrRes'))+v('mgrOverheadHrs'),tMP=mH*getRate('managerRate');const pmP=pf($('pmOverhead').value)/100,pmC=(tTP+tOP+tMP)*pmP;const scP=getRate('scraperDesign');let customTotal=0;const customItems=[];currentRates.forEach(r=>{if(r.active&&!DEFAULT_RATES.find(d=>d.id===r.id)){customTotal+=r.rate;customItems.push({name:r.name,rate:r.rate,unit:r.unit});}});let pocCost=0;if($('includePoc').checked){pocCost=pf($('pocServers').value)*spd+pf($('pocTechHrs').value)*getRate('techWeekdayRate')+pf($('pocMgrHrs').value)*getRate('managerRate')+pf($('pocScrapers').value)*getRate('scraperDesign');}const ppi=scP+tSP+tTP+tOP+tMP+pmC+customTotal;const inst=pf($('numInstances').value),tp=ppi*inst+pocCost,psku=pf($('totalProducts').value)>0?tp/pf($('totalProducts').value):0;return{spm,spd,sI,sR,tS,tSP,tHI,tHW,tHE,tTH,tPI,tPW,tPE,tTP,oH,tOP,mH,tMP,pmC,pmPct:pmP*100,scP,customItems,customTotal,pocCost,ppi,inst,tp,psku,lines:[{name:'Scraper Design',detail:'Simple scraper',hrs:1,rate:scP,amount:scP},{name:'Server Costs',detail:`${fmt(tS,1)} server-days @ ${fmtC(spd)}/day`,hrs:tS,rate:spd,amount:tSP},{name:'Tech (Initial)',detail:`${fmt(tHI,1)} hrs @ ${fmtC(getRate('techWeekdayRate'))}/hr`,hrs:tHI,rate:getRate('techWeekdayRate'),amount:tPI},{name:'Tech (Weekday)',detail:`${fmt(tHW,1)} hrs @ ${fmtC(getRate('techWeekdayRate'))}/hr`,hrs:tHW,rate:getRate('techWeekdayRate'),amount:tPW},{name:'Tech (Weekend)',detail:`${fmt(tHE,1)} hrs @ ${fmtC(getRate('techWeekendRate'))}/hr`,hrs:tHE,rate:getRate('techWeekendRate'),amount:tPE},{name:'Operations',detail:`${fmt(oH,1)} hrs @ ${fmtC(getRate('opsRate'))}/hr`,hrs:oH,rate:getRate('opsRate'),amount:tOP},{name:'Manager',detail:`${fmt(mH,1)} hrs @ ${fmtC(getRate('managerRate'))}/hr`,hrs:mH,rate:getRate('managerRate'),amount:tMP},{name:'Project Mgmt',detail:`${pmP*100}% of effort`,hrs:'\u2014',rate:'\u2014',amount:pmC},...customItems.map(c=>({name:c.name,detail:c.unit,hrs:1,rate:c.rate,amount:c.rate}))]};}
+
+function generateQuote(){const c=calculate();const excl=[];Object.entries(scopeToggles).forEach(([k,v])=>{if(!v)excl.push(k);});currentRates.forEach(r=>{if(!r.active)excl.push(r.name);});
+$('quoteOutput').innerHTML=`<div class="quote-header"><div class="ld-brand">LUMINA DATAMATICS</div><h2>QuoteFlow AI &mdash; ${esc($('projectCode').value)}</h2><div class="quote-meta"><div class="quote-meta-item"><div class="label">Client</div><div class="value">${esc($('clientName').value)}</div></div><div class="quote-meta-item"><div class="label">Date</div><div class="value">${esc($('requestDate').value)}</div></div><div class="quote-meta-item"><div class="label">Prepared By</div><div class="value">${esc($('preparedBy').value)}</div></div><div class="quote-meta-item"><div class="label">Type</div><div class="value">Velocity Tracking</div></div><div class="quote-meta-item"><div class="label">Site / Scope</div><div class="value">${esc($('targetSite').value)} &mdash; ${esc($('scopeId').value)}</div></div><div class="quote-meta-item"><div class="label">Locale</div><div class="value">${esc($('locale').value)}</div></div><div class="quote-meta-item"><div class="label">Cadence</div><div class="value">${esc($('cadence').value)}</div></div><div class="quote-meta-item"><div class="label">Products</div><div class="value">${Number($('totalProducts').value).toLocaleString()}</div></div></div></div>
+<div class="quote-totals"><div class="total-card"><div class="tc-label">Price per Instance</div><div class="tc-value">${fmtC(c.ppi)}</div><div class="tc-sub">USD</div></div><div class="total-card"><div class="tc-label">Total (${c.inst} instances)</div><div class="tc-value">${fmtC(c.tp)}</div><div class="tc-sub">USD${c.pocCost?' (incl. POC)':''}</div></div></div>
+<div class="card"><div class="card-header"><div class="card-title">Cost Breakdown</div></div><div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>#</th><th>Component</th><th>Details</th><th class="num">Hrs/Units</th><th class="num">Rate (USD)</th><th class="num">Amount (USD)</th></tr></thead><tbody>${c.lines.map((l,i)=>`<tr><td style="font-weight:600;color:var(--text-3);">${i+1}</td><td style="font-weight:600;">${l.name}</td><td style="color:var(--text-3);">${l.detail}</td><td class="num">${typeof l.hrs==='number'?fmt(l.hrs,1):l.hrs}</td><td class="num">${typeof l.rate==='number'?fmtC(l.rate):l.rate}</td><td class="num" style="font-weight:600;">${fmtC(l.amount)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5" style="text-align:right;">Price per Instance</td><td class="num">${fmtC(c.ppi)}</td></tr>${c.pocCost?`<tr><td colspan="5" style="text-align:right;color:var(--amber);">POC Cost</td><td class="num" style="color:var(--amber);">${fmtC(c.pocCost)}</td></tr>`:''}<tr class="grand-total"><td colspan="5" style="text-align:right;">Total (${c.inst} instances)</td><td class="num">${fmtC(c.tp)}</td></tr></tbody></table></div></div>
+${excl.length?`<div class="card" style="opacity:.6;margin-top:14px;"><div class="card-title" style="font-size:12px;margin-bottom:4px;">Excluded Items</div><p style="font-size:11px;color:var(--text-3);">${excl.join(', ')}</p></div>`:''}
+
+<div class="ai-panel" id="aiPanel2" style="display:${aiEnabled?'block':'none'};"><h4>&#128221; AI Quote Narrator</h4><p>Generate a professional executive summary and cover note for this quote, ready to include in your proposal document.</p><button class="btn btn-ai btn-sm" onclick="aiNarrate()">Generate Summary</button><div id="aiNarrateResult"></div></div>
+<div class="ai-panel" id="aiPanel3" style="display:${aiEnabled?'block':'none'};"><h4>&#9993; AI Email Drafter</h4><p>Draft a ready-to-send quote submission email with pricing highlights, scope summary, and professional next steps.</p><button class="btn btn-ai btn-sm" onclick="aiDraftEmail()">Draft Email</button><div id="aiEmailResult"></div></div>
+<div class="ai-panel" id="aiPanel7" style="display:${aiEnabled?'block':'none'};"><h4>&#128172; AI Chat Assistant</h4><p>Ask any question about this quote &mdash; &ldquo;What if we reduce instances to 2?&rdquo;, &ldquo;What drives the server cost?&rdquo;</p><div style="display:flex;gap:8px;"><input class="form-input" id="aiChatInput" placeholder="Ask about this quote..." style="flex:1;background:var(--card);"><button class="btn btn-ai btn-sm" onclick="aiChat()">Ask</button></div><div id="aiChatResult"></div></div>
+
+<div class="converter-panel"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Currency Converter</h4><div class="converter-row"><div class="form-group"><label>Target Currency</label><select class="form-select" id="convCurrency" style="width:160px;"><option value="INR">INR &mdash; Rupee</option><option value="EUR">EUR &mdash; Euro</option><option value="GBP">GBP &mdash; Pound</option><option value="AUD">AUD &mdash; AUD</option><option value="CAD">CAD &mdash; CAD</option><option value="JPY">JPY &mdash; Yen</option><option value="SGD">SGD</option><option value="AED">AED</option><option value="CHF">CHF</option><option value="Custom">Custom</option></select></div><div class="form-group"><label>Exchange Rate (1 USD =)</label><input type="number" min="0" class="form-input" id="convRate" placeholder="e.g. 83.5" style="width:160px;" step="any"></div><div class="form-group" style="align-self:flex-end;"><button class="btn btn-primary" onclick="convertCurrency()">Convert</button></div></div><div id="convResult" style="margin-top:16px;"></div></div>
+<div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;"><button class="btn btn-secondary" onclick="goToStep(3)">&larr; Back</button><button class="btn btn-primary" onclick="saveQuote()">Save Quote</button><button class="btn btn-secondary" onclick="exportExcel()">Excel</button><button class="btn btn-secondary" onclick="exportPDF()">PDF</button><button class="btn btn-ghost" onclick="window.print()">Print</button></div>`;}
+
+function convertCurrency(){const rate=pf($('convRate').value);if(!rate)return alert('Enter a rate.');const cur=$('convCurrency').value;const c=calculate();const sym={INR:'\u20b9 ',EUR:'\u20ac',GBP:'\xa3',AUD:'A$ ',CAD:'C$ ',JPY:'\xa5',SGD:'S$ ',AED:'AED ',CHF:'CHF ',Custom:''}[cur]||'';let rows=c.lines.map(l=>`<tr><td>${l.name}</td><td class="num">${fmtC(l.amount)}</td><td class="num">${sym}${fmt(l.amount*rate)}</td></tr>`).join('');rows+=`<tr class="conv-total"><td>Per Instance</td><td class="num">${fmtC(c.ppi)}</td><td class="num">${sym}${fmt(c.ppi*rate)}</td></tr><tr class="conv-total"><td>Total (${c.inst} inst.)</td><td class="num">${fmtC(c.tp)}</td><td class="num">${sym}${fmt(c.tp*rate)}</td></tr>`;$('convResult').innerHTML=`<table class="conv-table"><thead><tr><th>Component</th><th class="num">USD</th><th class="num">${cur}</th></tr></thead><tbody>${rows}</tbody></table><p style="font-size:10px;margin-top:10px;opacity:.4;">1 USD = ${fmt(rate,4)} ${cur}</p>`;}
+
+function getSavedQuotes(){return JSON.parse(localStorage.getItem('qf_quotes')||'[]');}
+function setSavedQuotes(q){localStorage.setItem('qf_quotes',JSON.stringify(q));}
+function saveQuote(){const qs=getSavedQuotes(),code=$('projectCode').value;const ver=qs.filter(q=>q.projectCode===code).length+1;const c=calculate();const q={id:Date.now().toString(),projectCode:code,version:ver,clientName:$('clientName').value,date:$('requestDate').value,preparedBy:$('preparedBy').value,locale:$('locale').value,site:$('targetSite').value,cadence:$('cadence').value,projectType:'Velocity Tracking',scopeId:$('scopeId').value,summary:$('projectSummary').value,briefScope:$('briefScope').value,numCategories:$('numCategories').value,totalProducts:$('totalProducts').value,numInstances:$('numInstances').value,pmOverhead:$('pmOverhead').value,scopeInputs:{},rateCard:JSON.parse(JSON.stringify(currentRates)),scopeToggles:{...scopeToggles},calculation:c,totalPrice:c.tp,pricePerInstance:c.ppi,savedAt:new Date().toISOString()};['serversInitial','daysInitial','numReScrapes','serversPerReScrape','techHrsInitial','techDaysInitial','techResInitial','techHrsWeekday','weekdayReDays','weekdayReRes','techHrsWeekend','weekendReDays','weekendReRes','opsHrsDay','opsDays','opsRes','mgrHrsDay','mgrDays','mgrRes','mgrOverheadHrs'].forEach(id=>{q.scopeInputs[id]=$(id).value;});qs.push(q);setSavedQuotes(qs);showModal('Quote Saved',`<p><strong>${esc(code)} v${ver}</strong> saved.<br>Total: <strong style="color:var(--maroon);">${fmtC(c.tp)}</strong></p>`);}
+
+function renderSavedQuotes(){const qs=getSavedQuotes(),s=($('searchQuotes')?.value||'').toLowerCase();const f=qs.filter(q=>q.clientName.toLowerCase().includes(s)||q.projectCode.toLowerCase().includes(s)||q.date.includes(s));const el=$('savedQuotesList');if(!f.length){el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><h3>No Saved Quotes</h3><p>Create your first quote to see it here.</p></div>`;return;}const g={};f.forEach(q=>{if(!g[q.projectCode])g[q.projectCode]=[];g[q.projectCode].push(q);});let h='<div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Code</th><th>Client</th><th>Date</th><th>Ver</th><th class="num">Total</th><th>Actions</th></tr></thead><tbody>';Object.values(g).forEach(vs=>{vs.sort((a,b)=>b.version-a.version);vs.forEach(q=>{h+=`<tr><td><strong>${esc(q.projectCode)}</strong></td><td>${esc(q.clientName)}</td><td>${q.date}</td><td><span class="badge badge-maroon">v${q.version}</span></td><td class="num">${fmtC(q.totalPrice)}</td><td><div style="display:flex;gap:3px;"><button class="btn btn-ghost btn-xs" onclick="viewSavedQuote('${q.id}')">View</button><button class="btn btn-ghost btn-xs" onclick="duplicateQuote('${q.id}')">Copy</button><button class="btn btn-ghost btn-xs" onclick="deleteSavedQuote('${q.id}')">Del</button></div></td></tr>`;});});h+='</tbody></table></div>';el.innerHTML=h;}
+
+function populateCompareDropdowns(){const qs=getSavedQuotes();const a=$('aiCompareA'),b=$('aiCompareB');if(!a||!b)return;a.innerHTML='';b.innerHTML='';qs.forEach(q=>{const o=`<option value="${q.id}">${esc(q.projectCode)} v${q.version} — ${esc(q.clientName)}</option>`;a.innerHTML+=o;b.innerHTML+=o;});}
+
+function viewSavedQuote(id){const q=getSavedQuotes().find(x=>x.id===id);if(!q)return;loadQuoteIntoForm(q);showScreen('newQuote');goToStep(4);}
+function loadQuoteIntoForm(q){$('clientName').value=q.clientName||'';$('requestDate').value=q.date||'';$('locale').value=q.locale||'';$('targetSite').value=q.site||'';$('cadence').value=q.cadence||'';$('projectCode').value=q.projectCode||'';$('preparedBy').value=q.preparedBy||'';$('scopeId').value=q.scopeId||'FBM';$('numCategories').value=q.numCategories||20;$('totalProducts').value=q.totalProducts||14000;$('numInstances').value=q.numInstances||3;$('pmOverhead').value=q.pmOverhead||10;$('projectSummary').value=q.summary||'';$('briefScope').value=q.briefScope||'';if(q.scopeInputs)Object.entries(q.scopeInputs).forEach(([k,v])=>{if($(k))$(k).value=v;});if(q.rateCard)currentRates=JSON.parse(JSON.stringify(q.rateCard));if(q.scopeToggles){scopeToggles={...q.scopeToggles};document.querySelectorAll('.scope-toggle').forEach(cb=>{if(scopeToggles[cb.dataset.key]!==undefined){cb.checked=scopeToggles[cb.dataset.key];cb.dispatchEvent(new Event('change'));}});}}
+function duplicateQuote(id){const q=getSavedQuotes().find(x=>x.id===id);if(!q)return;loadQuoteIntoForm(q);$('projectCode').value=q.projectCode+'-COPY';showScreen('newQuote');goToStep(1);}
+function deleteSavedQuote(id){if(!confirm('Delete?'))return;setSavedQuotes(getSavedQuotes().filter(q=>q.id!==id));renderSavedQuotes();}
+
+function getMasterRates(){return JSON.parse(localStorage.getItem('qf_master_rates')||JSON.stringify(DEFAULT_RATES));}
+function setMasterRates(r){localStorage.setItem('qf_master_rates',JSON.stringify(r));}
+function renderMasterRateCard(){const rates=getMasterRates(),tb=$('masterRateBody');if(!tb)return;tb.innerHTML='';rates.forEach((r,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td><label class="toggle"><input type="checkbox" ${r.active?'checked':''} onchange="toggleMasterRate(${i},this.checked)"><span class="slider"></span></label></td><td><input class="form-input" style="padding:6px 10px;" value="${r.name}" onchange="updateMasterRateName(${i},this.value)"></td><td><input type="number" min="0" class="form-input" style="width:120px;padding:6px 10px;font-family:var(--mono);" value="${r.rate}" step="any" onchange="updateMasterRateVal(${i},this.value)"></td><td><span class="badge badge-gray">${r.unit}</span></td>`;tb.appendChild(tr);});}
+function toggleMasterRate(i,v){const r=getMasterRates();r[i].active=v;setMasterRates(r);renderMasterRateCard();}
+function updateMasterRateName(i,v){const r=getMasterRates();r[i].name=v;setMasterRates(r);}
+function updateMasterRateVal(i,v){const r=getMasterRates();r[i].rate=pf(v);setMasterRates(r);}
+function addMasterRateComponent(){const name=prompt('Name:');if(!name)return;const rate=pf(prompt('Rate:','0'));const unit=prompt('Unit:','Per Hour')||'Per Hour';const r=getMasterRates();r.push({id:'c_'+Date.now(),name,rate,unit,active:true,excludable:true,type:'custom'});setMasterRates(r);renderMasterRateCard();}
+function saveMasterRateCard(){const log=JSON.parse(localStorage.getItem('qf_rate_log')||'[]');log.push({date:new Date().toISOString(),rates:getMasterRates()});localStorage.setItem('qf_rate_log',JSON.stringify(log));currentRates=JSON.parse(JSON.stringify(getMasterRates()));renderRateCard();renderRateVersionLog();showModal('Saved','<p>Master rate card versioned.</p>');}
+function renderRateVersionLog(){const log=JSON.parse(localStorage.getItem('qf_rate_log')||'[]'),el=$('rateVersionLog');if(!el)return;if(!log.length){el.innerHTML='<p style="color:var(--text-4);font-size:12px;">No versions yet.</p>';return;}el.innerHTML=log.slice().reverse().map((v,i)=>`<div style="padding:8px 0;border-bottom:1px solid var(--card-border);font-size:12px;color:var(--text-3);">v${log.length-i} &mdash; ${new Date(v.date).toLocaleString()}</div>`).join('');}
+
+function exportExcel(){const c=calculate();const wb=XLSX.utils.book_new();const s1=[[''],['','LUMINA DATAMATICS'],['','QuoteFlow AI &mdash; Quote Summary'],[''],['','Project Code:',$('projectCode').value,'','Prepared By:',$('preparedBy').value],['','Client:',$('clientName').value,'','Date:',$('requestDate').value],['','Site:',$('targetSite').value+' / '+$('scopeId').value,'','Locale:',$('locale').value],['','Type:','Velocity Tracking','','Cadence:',$('cadence').value],[''],['','#','Component','Details','Hrs/Units','Rate (USD)','Amount (USD)'],...c.lines.map((l,i)=>['',i+1,l.name,l.detail,typeof l.hrs==='number'?l.hrs:l.hrs,typeof l.rate==='number'?l.rate:l.rate,l.amount]),[''],['','','','','','Price/Instance',c.ppi],['','','','','','Total ('+c.inst+' inst.)',c.tp],[''],['','Generated by QuoteFlow AI — Lumina Datamatics']];const ws1=XLSX.utils.aoa_to_sheet(s1);ws1['!cols']=[{wch:3},{wch:5},{wch:30},{wch:30},{wch:12},{wch:18},{wch:16}];XLSX.utils.book_append_sheet(wb,ws1,'Quote Summary');const s2=[['','RATE CARD'],[''],['','Component','Rate','Unit','Status'],...currentRates.map(r=>['',r.name,r.rate,r.unit,r.active?'Active':'Off']),[''],['','Server Price/Month',c.spm.toFixed(2),'Per Month','Derived'],['','Server Price/Day',c.spd.toFixed(2),'Per Day','Derived']];XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s2),'Rate Card');XLSX.writeFile(wb,`${$('projectCode').value||'Quote'}_${$('requestDate').value}.xlsx`);}
+
+function exportPDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF();const c=calculate();const pw=doc.internal.pageSize.width;doc.setFillColor(123,31,58);doc.rect(0,0,pw,46,'F');doc.setFillColor(200,150,62);doc.rect(0,46,pw,2,'F');doc.setTextColor(200,150,62);doc.setFontSize(8);doc.setFont(undefined,'bold');doc.text('LUMINA DATAMATICS',14,14);doc.setTextColor(255,255,255);doc.setFontSize(18);doc.text('QuoteFlow AI',14,26);doc.setFontSize(9);doc.setFont(undefined,'normal');doc.text($('projectCode').value+' | '+$('clientName').value,14,36);doc.setFontSize(8);doc.setTextColor(220,220,220);doc.text($('requestDate').value+' | '+$('preparedBy').value,pw-14,14,{align:'right'});let y=56;doc.setFontSize(8.5);doc.setTextColor(50);doc.text(`Type: Velocity Tracking | Site: ${$('targetSite').value} | Locale: ${$('locale').value} | Cadence: ${$('cadence').value}`,14,y);y+=5;doc.text(`Products: ${Number($('totalProducts').value).toLocaleString()} | Instances: ${c.inst}`,14,y);y+=8;doc.setFillColor(245,243,240);doc.roundedRect(14,y,pw-28,16,3,3,'F');doc.setFontSize(8);doc.setTextColor(100);doc.setFont(undefined,'bold');doc.text('PRICE / INSTANCE',20,y+6);doc.text('TOTAL ('+c.inst+' INST.)',110,y+6);doc.setFontSize(10);doc.setTextColor(123,31,58);doc.text(fmtC(c.ppi),20,y+13);doc.text(fmtC(c.tp),110,y+13);y+=24;doc.autoTable({startY:y,head:[['#','Component','Details','Hrs','Rate','Amount']],body:c.lines.map((l,i)=>[i+1,l.name,l.detail,typeof l.hrs==='number'?fmt(l.hrs,1):l.hrs,typeof l.rate==='number'?fmtC(l.rate):l.rate,fmtC(l.amount)]),foot:[[{content:'',styles:{fillColor:[255,255,255]}},{content:'',colSpan:3},{content:'Total ('+c.inst+')',styles:{halign:'right',fontStyle:'bold'}},{content:fmtC(c.tp),styles:{halign:'right',fontStyle:'bold',textColor:[123,31,58]}}]],styles:{fontSize:7.5,cellPadding:3},headStyles:{fillColor:[123,31,58],textColor:[255,255,255],fontStyle:'bold'},alternateRowStyles:{fillColor:[250,248,245]},footStyles:{fillColor:[245,243,240],textColor:[40,40,40]},margin:{left:14,right:14}});const ph=doc.internal.pageSize.height;doc.setFillColor(123,31,58);doc.rect(0,ph-12,pw,12,'F');doc.setFontSize(7);doc.setTextColor(180,160,160);doc.text('QuoteFlow AI — Lumina Datamatics Ltd.',14,ph-4);doc.save(`${$('projectCode').value||'Quote'}_${$('requestDate').value}.pdf`);}
+
+function loadSettings(){const s=JSON.parse(localStorage.getItem('qf_settings')||'{}');if(s.company&&$('settCompany'))$('settCompany').value=s.company;if(s.preparedBy){if($('settPreparedBy'))$('settPreparedBy').value=s.preparedBy;$('preparedBy').value=s.preparedBy;}if(s.currency&&$('settCurrency'))$('settCurrency').value=s.currency;if(s.theme)document.documentElement.setAttribute('data-theme',s.theme);const mr=getMasterRates();if(mr.length)currentRates=JSON.parse(JSON.stringify(mr));}
+function saveSettings(){localStorage.setItem('qf_settings',JSON.stringify({company:$('settCompany').value,preparedBy:$('settPreparedBy').value,currency:$('settCurrency').value,theme:document.documentElement.getAttribute('data-theme')||'light'}));}
+['settCompany','settPreparedBy','settCurrency'].forEach(id=>{const el=$(id);if(el)el.addEventListener('change',saveSettings);});
+function toggleTheme(){setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');}
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);saveSettings();}
+function exportAllData(){const d={quotes:getSavedQuotes(),masterRates:getMasterRates(),settings:JSON.parse(localStorage.getItem('qf_settings')||'{}'),rateLog:JSON.parse(localStorage.getItem('qf_rate_log')||'[]')};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.download=`QuoteFlow_Backup_${today()}.json`;a.click();}
+function importAllData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(d.quotes)setSavedQuotes(d.quotes);if(d.masterRates)setMasterRates(d.masterRates);if(d.settings)localStorage.setItem('qf_settings',JSON.stringify(d.settings));if(d.rateLog)localStorage.setItem('qf_rate_log',JSON.stringify(d.rateLog));loadSettings();renderSavedQuotes();renderMasterRateCard();renderRateVersionLog();showModal('Imported','<p>All data restored.</p>');}catch(err){alert('Invalid file.');}};r.readAsText(f);}
+function clearAllData(){if(!confirm('Delete ALL data?'))return;if(!confirm('This cannot be undone.'))return;['qf_quotes','qf_master_rates','qf_settings','qf_rate_log','qf_api_key','qf_ai_enabled'].forEach(k=>localStorage.removeItem(k));location.reload();}
+
+function showModal(t,b){$('modalContent').innerHTML=`<h3>${t}</h3>${b}<div class="modal-actions"><button class="btn btn-primary btn-sm" onclick="closeModal()">OK</button></div>`;$('modal').classList.add('show');}
+function closeModal(){$('modal').classList.remove('show');}
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+
+/* ═══ AI FEATURE ENGINE ═══ */
+async function callAI(prompt,resultEl){
+  const key=$('aiApiKey')?.value||localStorage.getItem('qf_api_key');
+  if(!key){$(resultEl).innerHTML='<div class="ai-disabled-msg">Please enter your API key in AI Features settings to use this feature.</div>';return null;}
+  $(resultEl).innerHTML='<div class="ai-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>AI is thinking...</span></div>';
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    if(data.error){$(resultEl).innerHTML=`<div class="ai-result" style="color:var(--rose);">Error: ${data.error.message}</div>`;return null;}
+    const text=data.content?.map(i=>i.text||'').join('\n')||'No response';
+    $(resultEl).innerHTML=`<div class="ai-result">${text.replace(/\n/g,'<br>')}</div>`;
+    return text;
+  }catch(err){$(resultEl).innerHTML=`<div class="ai-result" style="color:var(--rose);">Connection error. Check your API key and network.</div>`;return null;}
+}
+
+function getQuoteContext(){const c=calculate();return `Client: ${$('clientName').value}, Site: ${$('targetSite').value}, Scope: ${$('scopeId').value}, Locale: ${$('locale').value}, Categories: ${$('numCategories').value}, Products: ${$('totalProducts').value}, Instances: ${c.inst}, Total: $${c.tp.toFixed(2)}, Price/Instance: $${c.ppi.toFixed(2)}, Server Cost: $${c.tSP.toFixed(2)}, Tech Cost: $${c.tTP.toFixed(2)}, Ops Cost: $${c.tOP.toFixed(2)}, Manager Cost: $${c.tMP.toFixed(2)}, PM: $${c.pmC.toFixed(2)}, Scraper: $${c.scP.toFixed(2)}`;}
+
+function aiExtractScope(){const brief=$('aiBriefInput').value;if(!brief.trim())return alert('Paste a client brief first.');callAI(`You are a pre-sales scope estimator for web scraping/velocity tracking projects at Lumina Datamatics. From the following client brief, extract and suggest values for: number of categories, total products to scrape, estimated number of re-scrapes per month, server count needed, tech hours per day, and any other relevant parameters. Format as a simple list with field name: suggested value. Brief:\n${brief}`,'aiScopeResult');}
+function aiNarrate(){callAI(`You are writing a professional executive summary for a quote from Lumina Datamatics. Write a 2-3 paragraph summary covering: project overview, key deliverables, pricing rationale, and value proposition. Keep it formal and client-ready. Quote details: ${getQuoteContext()}`,'aiNarrateResult');}
+function aiDraftEmail(){callAI(`Draft a professional quote submission email from Lumina Datamatics. Include: greeting, brief project reference, total pricing with key highlights, next steps, and professional sign-off. Keep it concise. Quote: ${getQuoteContext()}, Prepared by: ${$('preparedBy').value}`,'aiEmailResult');}
+function aiNegotiate(){const input=$('aiNegInput').value;if(!input.trim())return alert('Describe the negotiation scenario.');callAI(`You are a pricing negotiation advisor at Lumina Datamatics. Given this quote context: ${getQuoteContext()}. Client situation: ${input}. Suggest 3 specific discount scenarios with: what to change, how much it saves, and impact on margins. Be specific with numbers.`,'aiNegResult');}
+function aiCompareQuotes(){const qa=getSavedQuotes().find(q=>q.id===$('aiCompareA').value);const qb=getSavedQuotes().find(q=>q.id===$('aiCompareB').value);if(!qa||!qb)return alert('Select two quotes.');callAI(`Compare these two quotes and generate a plain-English diff. Quote A: ${JSON.stringify({code:qa.projectCode,ver:qa.version,total:qa.totalPrice,ppi:qa.pricePerInstance,inputs:qa.scopeInputs})}. Quote B: ${JSON.stringify({code:qb.projectCode,ver:qb.version,total:qb.totalPrice,ppi:qb.pricePerInstance,inputs:qb.scopeInputs})}. Explain what changed, why the price moved, and how to explain it to the client.`,'aiCompareResult');}
+function aiDetectAnomalies(){const qs=getSavedQuotes();if(qs.length<2){$('aiAnomalyResult').innerHTML='<div class="ai-result">Need at least 2 saved quotes for comparison.</div>';return;}const currentInputs={};['serversInitial','daysInitial','numReScrapes','serversPerReScrape','techHrsInitial','techDaysInitial','techResInitial','techHrsWeekday','weekdayReDays','weekdayReRes','techHrsWeekend','weekendReDays','weekendReRes','opsHrsDay','opsDays','opsRes','mgrHrsDay','mgrDays','mgrRes','mgrOverheadHrs'].forEach(id=>{currentInputs[id]=pf($(id).value);});const history=qs.map(q=>q.scopeInputs).filter(Boolean);callAI(`You are a QA anomaly detector. Compare these current quote inputs against historical averages and flag anything unusual. Current inputs: ${JSON.stringify(currentInputs)}. Historical inputs (${history.length} past quotes): ${JSON.stringify(history.slice(-5))}. List any fields that seem unusually high or low with a brief explanation.`,'aiAnomalyResult');}
+function aiChat(){const q=$('aiChatInput').value;if(!q.trim())return;callAI(`You are an AI assistant for QuoteFlow AI by Lumina Datamatics. Answer this question about the current quote. Be specific and use numbers. Context: ${getQuoteContext()}. Question: ${q}`,'aiChatResult');}
+</script>
+</body>
+</html>
